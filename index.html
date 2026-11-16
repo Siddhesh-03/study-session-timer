@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Study Sessions – 9 Hour Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#12161f; --panel:#1b2130; --line:#2c3447; --text:#eef1f7; --muted:#97a1b8;
+  --video:#5fb0ff; --notes:#ffc766; --practice:#6fe0a8; --break:#ff8fa3;
+  --serif:'Fraunces',Georgia,serif; --sans:'DM Sans',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: light){
+  :root{--bg:#f3efe7;--panel:#fffdf8;--line:#ddd5c4;--text:#1d2230;--muted:#6a7185;
+  --video:#1f7ae0;--notes:#c98a0a;--practice:#14925a;--break:#d6405c;}
+}
+*{box-sizing:border-box;margin:0}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);display:flex;justify-content:center;padding:24px 16px 48px}
+main{width:100%;max-width:640px}
+h1{font-family:var(--serif);font-weight:700;font-size:1.6rem;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:.9rem;margin-top:4px}
+.overall{margin:20px 0 6px;display:flex;justify-content:space-between;font-size:.85rem;color:var(--muted)}
+.overall b{color:var(--text);font-variant-numeric:tabular-nums}
+.track{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.seg{height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.seg i{display:block;height:100%;width:0;background:var(--accent,var(--practice))}
+.card{margin-top:22px;background:var(--panel);border:1px solid var(--line);border-radius:24px;padding:28px 20px;text-align:center}
+.where{color:var(--muted);font-size:.9rem}
+.phase{font-family:var(--serif);font-size:1.9rem;font-weight:700;margin:4px 0 18px;color:var(--c)}
+.ring{position:relative;width:min(300px,78vw);aspect-ratio:1;margin:0 auto}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:10}
+.ring .bg{stroke:var(--line)}
+.ring .fg{stroke:var(--c);stroke-linecap:round;transition:stroke-dashoffset .3s linear}
+.time{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.time .big{font-family:var(--serif);font-size:clamp(2.6rem,12vw,3.6rem);font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.time .small{color:var(--muted);font-size:.85rem;margin-top:2px}
+.hint{margin:18px auto 0;max-width:420px;color:var(--muted);font-size:.95rem;min-height:2.6em}
+.btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+button{font:inherit;font-weight:700;border:1px solid var(--line);background:transparent;color:var(--text);padding:12px 20px;border-radius:14px;cursor:pointer;min-height:46px}
+button:hover{border-color:var(--muted)}
+button:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+button.main{background:var(--c);border-color:var(--c);color:#10141c;min-width:140px}
+button:disabled{opacity:.4;cursor:not-allowed}
+.settings{margin-top:14px;color:var(--muted);font-size:.85rem;display:flex;gap:8px;align-items:center;justify-content:center}
+.settings input{width:56px;font:inherit;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:4px 6px}
+ol{list-style:none;padding:0;margin-top:22px;display:grid;gap:8px}
+li{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--line);border-radius:14px;font-size:.92rem;color:var(--muted)}
+li .dot{width:12px;height:12px;border-radius:50%;background:var(--c);flex:none;opacity:.5}
+li .len{margin-left:auto;font-variant-numeric:tabular-nums}
+li.now{color:var(--text);border-color:var(--c);background:var(--panel)}
+li.now .dot{opacity:1}
+li.done{opacity:.55;text-decoration:line-through}
+li.gap{margin-top:8px;border:none;padding:4px 2px;font-family:var(--serif);color:var(--text);font-size:1rem}
+.finish{display:none;font-family:var(--serif);font-size:1.4rem;padding:30px 10px}
+@media (prefers-reduced-motion:reduce){.ring .fg{transition:none}}
+</style>
+</head>
+<body>
+<main>
+  <h1>9-hour study plan</h1>
+  <p class="sub">Three sessions · video, notes, then at least two solved questions.</p>
+
+  <div class="overall"><span>Study time done: <b id="elapsed">0:00:00</b></span><span>of 9:00:00</span></div>
+  <div class="track" id="track"></div>
+
+  <section class="card" id="card">
+    <div class="where" id="where"></div>
+    <div class="phase" id="phase"></div>
+    <div class="ring">
+      <svg viewBox="0 0 120 120"><circle class="bg" cx="60" cy="60" r="54"/><circle class="fg" id="fg" cx="60" cy="60" r="54"/></svg>
+      <div class="time"><div class="big" id="big">30:00</div><div class="small" id="small">remaining</div></div>
+    </div>
+    <p class="hint" id="hint"></p>
+    <div class="btns">
+      <button class="main" id="start">Start</button>
+      <button id="brk">Take break</button>
+      <button id="skip">Done, next</button>
+    </div>
+    <div class="settings">
+      One break per session, up to <input type="number" id="brkMin" min="1" max="60" value="10"> min
+    </div>
+    <div class="finish" id="finish">All three sessions complete. Great work today.</div>
+  </section>
+
+  <ol id="list"></ol>
+  <div class="btns"><button id="reset">Reset everything</button></div>
+</main>
+
+<script>
+const PHASES = [
+  {name:'Watch the video', min:30, c:'--video', hint:'Watch the lecture. Jot down questions, but save the notes for the next block.'},
+  {name:'Take notes',      min:30, c:'--notes', hint:'Turn what you watched into your own short notes.'},
+  {name:'Solve questions', min:120,c:'--practice', hint:'Solve at least two questions, fully and without peeking.'}
+];
+const STEPS = [];
+for(let s=0;s<3;s++) PHASES.forEach(p=>STEPS.push({...p,session:s}));
+const TOTAL = STEPS.reduce((a,p)=>a+p.min*60,0);
+const KEY='study-timer-v1';
+const $=id=>document.getElementById(id);
+
+let st = {idx:0, left:STEPS[0].min*60, running:false, onBreak:false, breakLeft:0, breakUsed:[false,false,false], done:false, studied:0};
+try{const x=JSON.parse(localStorage.getItem(KEY)); if(x && x.savedAt){
+  st=x.st; if(st.running){ const d=Math.floor((Date.now()-x.savedAt)/1000); advance(d); }
+}}catch(e){}
+let last=Date.now(), timer=null;
+
+function save(){try{localStorage.setItem(KEY,JSON.stringify({st,savedAt:Date.now()}))}catch(e){}}
+const fmt=s=>{s=Math.max(0,Math.ceil(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),r=s%60;
+  return (h?h+':':'')+String(m).padStart(2,'0')+':'+String(r).padStart(2,'0')};
+const fmtH=s=>{s=Math.floor(s);return Math.floor(s/3600)+':'+String(Math.floor(s%3600/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+
+function beep(n=3){
+  try{const a=new (window.AudioContext||window.webkitAudioContext)();
+    for(let i=0;i<n;i++){const o=a.createOscillator(),g=a.createGain();o.frequency.value=880;o.connect(g);g.connect(a.destination);
+      const t=a.currentTime+i*.35;g.gain.setValueAtTime(.2,t);g.gain.exponentialRampToValueAtTime(.001,t+.25);o.start(t);o.stop(t+.3);}
+  }catch(e){}
+}
+function notify(msg){
+  try{ if('Notification' in window && Notification.permission==='granted') new Notification('Study timer',{body:msg}); }catch(e){}
+  document.title=msg;
+}
+
+function nextStep(auto){
+  if(st.idx>=STEPS.length-1){ st.done=true; st.running=false; st.left=0; beep(5); notify('All sessions complete!'); return; }
+  const prevSession=STEPS[st.idx].session;
+  st.idx++; st.left=STEPS[st.idx].min*60; st.onBreak=false;
+  const sameSession = STEPS[st.idx].session===prevSession;
+  if(!sameSession){ st.running=false; }   // wait for you to start the next session
+  if(auto){ beep(); notify(sameSession ? 'Next: '+STEPS[st.idx].name : 'Session done! Take a rest, then start session '+(STEPS[st.idx].session+1)); }
+}
+function advance(sec){
+  while(sec>0 && st.running && !st.done){
+    if(st.onBreak){
+      const u=Math.min(sec,st.breakLeft); st.breakLeft-=u; sec-=u;
+      if(st.breakLeft<=0){ st.onBreak=false; beep(2); notify('Break over. Back to work!'); }
+    } else {
+      const u=Math.min(sec,st.left); st.left-=u; st.studied+=u; sec-=u;
+      if(st.left<=0) nextStep(true);
+    }
+  }
+}
+function tick(){
+  const now=Date.now(); const d=(now-last)/1000; last=now;
+  if(st.running){ st._acc=(st._acc||0)+d; const w=Math.floor(st._acc); if(w>0){st._acc-=w; advance(w);} save(); }
+  render();
+}
+
+function render(){
+  const step=STEPS[st.idx];
+  const col=st.onBreak?'--break':step.c;
+  document.documentElement.style.setProperty('--c',`var(${col})`);
+  $('where').textContent=`Session ${step.session+1} of 3`;
+  $('phase').textContent=st.done?'Finished':(st.onBreak?'Break time':step.name);
+  const len=step.min*60, secs=st.onBreak?st.breakLeft:st.left, total=st.onBreak?(+$('brkMin').value||10)*60:len;
+  $('big').textContent=st.done?'0:00':fmt(secs);
+  $('small').textContent=st.onBreak?'break left':'remaining';
+  const C=2*Math.PI*54; $('fg').style.strokeDasharray=C;
+  $('fg').style.strokeDashoffset=C*(st.done?0:(st.onBreak?1-secs/total:secs/len));
+  $('hint').textContent=st.done?'':(st.onBreak?'Rest your eyes. The timer resumes automatically when the break ends.':step.hint);
+  $('elapsed').textContent=fmtH(st.studied);
+  const startBtn=$('start');
+  startBtn.textContent=st.running?'Pause':(st.studied||st.idx?'Resume':'Start');
+  if(!st.running && st.idx>0 && st.left===STEPS[st.idx].min*60 && STEPS[st.idx].session!==STEPS[st.idx-1].session) startBtn.textContent='Start session '+(step.session+1);
+  startBtn.disabled=st.done || st.onBreak;
+  $('brk').disabled=st.done||st.onBreak||!st.running||st.breakUsed[step.session];
+  $('brk').textContent=st.breakUsed[step.session]?'Break used':'Take break';
+  $('skip').disabled=st.done||st.onBreak;
+  document.querySelector('.btns').style.display=st.done?'none':'flex';
+  document.querySelector('.settings').style.display=st.done?'none':'flex';
+  $('finish').style.display=st.done?'block':'none';
+  document.querySelectorAll('.seg i').forEach((el,i)=>{
+    const a=i*3*3600, b=Math.min(TOTAL,Math.max(0,st.studied-a)); el.style.width=Math.min(100,b/(3*3600)*100)+'%';
+  });
+  document.querySelectorAll('li[data-i]').forEach(li=>{
+    const i=+li.dataset.i; li.className=(st.done||i<st.idx)?'done':(i===st.idx?'now':'');
+  });
+}
+
+function build(){
+  $('track').innerHTML=[0,1,2].map(()=>'<div class="seg"><i></i></div>').join('');
+  let h='';
+  STEPS.forEach((p,i)=>{
+    if(i%3===0) h+=`<li class="gap">Session ${p.session+1}</li>`;
+    h+=`<li data-i="${i}" style="--c:var(${p.c})"><span class="dot" style="background:var(${p.c})"></span>${p.name}<span class="len">${p.min>=60?(p.min/60)+' h':p.min+' min'}</span></li>`;
+  });
+  $('list').innerHTML=h;
+}
+
+$('start').onclick=()=>{
+  if(!st.running && 'Notification' in window && Notification.permission==='default'){ try{Notification.requestPermission()}catch(e){} }
+  st.running=!st.running; last=Date.now(); document.title='Study Sessions'; save(); render();
+};
+$('skip').onclick=()=>{ if(confirm('Mark this block as finished and move on?')){ st.studied+=st.left; const wasRun=st.running; nextStep(false); if(wasRun && STEPS[st.idx].session===STEPS[Math.max(0,st.idx-1)].session) st.running=true; save(); render(); } };
+$('brk').onclick=()=>{
+  const m=Math.max(1,Math.min(60,+$('brkMin').value||10));
+  st.onBreak=true; st.breakLeft=m*60; st.breakUsed[STEPS[st.idx].session]=true; save(); render();
+};
+$('reset').onclick=()=>{ if(confirm('Reset all progress?')){
+  st={idx:0,left:STEPS[0].min*60,running:false,onBreak:false,breakLeft:0,breakUsed:[false,false,false],done:false,studied:0};
+  try{localStorage.removeItem(KEY)}catch(e){} document.title='Study Sessions'; render(); } };
+
+build(); render();
+timer=setInterval(tick,250);
+</script>
+</body>
+</html>
